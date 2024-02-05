@@ -106,7 +106,7 @@ def manage_add_data():
                         print("Invalid! IMF Country Code has to be 3 Digits! Try agian!")
                 country_name = input("Enter Country: ").title()
 
-                insert_query = f'INSERT INTO `{table_name}` (Country_Code, IMF_Country_Code, Country, Indicator_Type, Series_Name) VALUES (@country_code, @imf_country_code, @country_name, @indicator_type, @series_name)'
+                insert_query = f'INSERT INTO `{table_name}` (Country_Code, IMF_Country_Code, Country) VALUES (@country_code, @imf_country_code, @country_name)'
                 query_params = [
                     bigquery.ScalarQueryParameter("country_code", "STRING", country_code),
                     bigquery.ScalarQueryParameter("imf_country_code", "INTEGER", imf_country_code),
