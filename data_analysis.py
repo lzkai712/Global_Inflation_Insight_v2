@@ -48,7 +48,6 @@ def search_country_data():
                         break
                     else:
                         print("Invaild! IMF Country Code has to be 3 digits!")
-            identifier = int(identifier)
             type_inflation = input("Choose Inflation Type:\n1. Energy Consumer Price Inflation\n2. Food Consumer Price Inflation\n3. Headline Consumer Price Inflation\n4. Producer Price Inflation \nEnter your choice: ")
 
             if type_inflation not in ['1', '2', '3', '4']:
@@ -110,7 +109,7 @@ def search_country_data():
                 plt.show()
 
             else:
-                print("No data found.")
+                print(f"No data found wiht {identifier}.")
 
         else:
             print("Invalid option. Try Again.")
@@ -176,6 +175,7 @@ def country_highest_lowest_rate():
         print("\nHighest Inflation Rates:")
         for table_name, highest in highest_values.items():
             valid_values = []
+            max_year=None
             for key, value in highest.items():
                 if key != 'Country' and value is not None:
                     try:
@@ -210,34 +210,58 @@ def visualize_country_data(identifier, highest_values, lowest_values, start_year
     """Visualize the highest and lowest inflation rates using Matplotlib"""
 
     # Extract highest and lowest rates for each type within the specified range of years
-    highest_rates = {table: None for table in highest_values.keys()}
-    lowest_rates = {table: None for table in lowest_values.keys()}
+    highest_rates = {table: {'year': None, 'rate': None, 'color': None} for table in highest_values.keys()}
+    lowest_rates = {table: {'year': None, 'rate': None, 'color': None} for table in lowest_values.keys()}
+
+    # Assign 8 different colors
+    colors = ['blue', 'green', 'red', 'purple', 'orange', 'cyan', 'pink', 'brown']
+
+    for i, (table, data) in enumerate(highest_rates.items()):
+        data['color'] = colors[i]
+
+    for i, (table, data) in enumerate(lowest_rates.items()):
+        data['color'] = colors[i]
 
     for table, highest in highest_values.items():
-        rates = [highest[key] if key in highest.keys() else None for key in [f'_{year}' for year in range(int(start_year), int(end_year) + 1)]]
-        highest_rates[table] = max(rates) if any(rates) else None
+        years = [f'_{year}' for year in range(int(start_year), int(end_year) + 1)]
+        rates = [highest[key] if key in highest.keys() and highest[key] is not None else None for key in years]
+
+        if any(rates) and None not in rates:
+            max_rate = max(rates)
+            max_year = years[rates.index(max_rate)]
+            highest_rates[table]['year'] = int(max_year[1:])
+            highest_rates[table]['rate'] = max_rate
 
     for table, lowest in lowest_values.items():
-        rates = [lowest[key] if key in lowest.keys() else None for key in [f'_{year}' for year in range(int(start_year), int(end_year) + 1)]]
-        lowest_rates[table] = min(rates) if any(rates) else None
+        years = [f'_{year}' for year in range(int(start_year), int(end_year) + 1)]
+        rates = [lowest[key] if key in lowest.keys() and lowest[key] is not None else None for key in years]
+
+        if any(rates) and None not in rates:
+            min_rate = min(rates)
+            min_year = years[rates.index(min_rate)]
+            lowest_rates[table]['year'] = int(min_year[1:])
+            lowest_rates[table]['rate'] = min_rate
 
     # Bar chart for highest and lowest rates
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(14, 6))
+
     bar_width = 0.35
-    index = np.arange(len(highest_rates))
+    index = np.arange(len(highest_rates) * 2)
 
-    for i, (table, rate) in enumerate(highest_rates.items()):
-        if rate is not None:
-            plt.bar(index + i * bar_width, rate, bar_width, label=f"{table} - Highest", alpha=0.7)
+    for i, (table, data) in enumerate(highest_rates.items()):
+        if data['rate'] is not None:
+            plt.bar(index[i], data['rate'], bar_width, label=f"{table} - Highest", alpha=0.7, color=data['color'])
+            plt.text(index[i], data['rate'], f"{data['rate']:.2f}\n{data['year']}", ha='center', va='bottom', color='black')
 
-    for i, (table, rate) in enumerate(lowest_rates.items()):
-        if rate is not None:
-            plt.bar(index + (i + 1) * bar_width, rate, bar_width, label=f"{table} - Lowest", alpha=0.7)
+    for i, (table, data) in enumerate(lowest_rates.items()):
+        if data['rate'] is not None:
+            plt.bar(index[i + len(highest_rates)], data['rate'], bar_width, label=f"{table} - Lowest", alpha=0.7, color=data['color'])
+            plt.text(index[i + len(highest_rates)], data['rate'], f"{data['rate']:.2f}\n{data['year']}", ha='center', va='bottom', color='black')
 
     plt.xlabel("Inflation Types")
     plt.ylabel("Inflation Rate")
     plt.title(f"Highest and Lowest Inflation Rates for {identifier} ({start_year}-{end_year})")
-    plt.xticks(index + bar_width / 2, highest_rates.keys()) 
+    plt.xticks(index + bar_width / 2, [f"{table} - Highest" for table in highest_rates.keys()] + [f"{table} - Lowest" for table in lowest_rates.keys()])
     plt.legend()
     plt.show()
 
